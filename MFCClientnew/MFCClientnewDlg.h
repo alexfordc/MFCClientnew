@@ -3,7 +3,9 @@
 //
 
 #pragma once
-
+#include "afxcmn.h"
+#include "afxwin.h"
+#include "ConnectSocket.h"
 
 // CMFCClientnewDlg 对话框
 class CMFCClientnewDlg : public CDialogEx
@@ -32,10 +34,17 @@ protected:
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
 public:
-	CString m_ip;
-	CString m_port;
+	UINT m_port;
 	CButton m_connect;
 	CButton m_close;
 	CButton m_send;
 	afx_msg void OnBnClickedButtonConnect();
+	afx_msg void OnBnClickedButtonClose();
+	afx_msg void OnBnClickedButtonSend();
+	void AddMsg(CString msg);
+	void MyEnableBtn();
+	CListCtrl m_listCtrl;
+	CString m_sendbuf;
+	CConnectSocket m_socket;
+	CIPAddressCtrl m_ip;
 };

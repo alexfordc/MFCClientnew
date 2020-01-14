@@ -179,6 +179,7 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="ConnectSocket.h" />
     <ClInclude Include="MFCClientnew.h" />
     <ClInclude Include="MFCClientnewDlg.h" />
     <ClInclude Include="Resource.h" />
@@ -186,6 +187,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ConnectSocket.cpp" />
     <ClCompile Include="MFCClientnew.cpp" />
     <ClCompile Include="MFCClientnewDlg.cpp" />
     <ClCompile Include="stdafx.cpp">

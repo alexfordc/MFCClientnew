@@ -3,9 +3,13 @@
 //
 
 #include "stdafx.h"
-#include "MFCClientnew.h"
+#include <Windows.h>
+#include <WinSock2.h>
+#include <winerror.h>
 #include "MFCClientnewDlg.h"
+#include "MFCClientnew.h"
 #include "afxdialogex.h"
+#include "ConnectSocket.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -51,8 +55,9 @@ END_MESSAGE_MAP()
 
 CMFCClientnewDlg::CMFCClientnewDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_MFCCLIENTNEW_DIALOG, pParent)
-	, m_ip(_T(""))
-	, m_port(_T(""))
+	,m_port(8080)
+	, m_sendbuf(_T(""))
+	,m_socket(this)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -60,11 +65,13 @@ CMFCClientnewDlg::CMFCClientnewDlg(CWnd* pParent /*=nullptr*/)
 void CMFCClientnewDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
-	DDX_Text(pDX, IDC_EDIT_IP, m_ip);
 	DDX_Text(pDX, IDC_EDIT_PORT, m_port);
 	DDX_Control(pDX, IDC_BUTTON_CONNECT, m_connect);
 	DDX_Control(pDX, IDC_BUTTON_CLOSE, m_close);
 	DDX_Control(pDX, IDC_BUTTON_Send, m_send);
+	DDX_Control(pDX, IDC_LIST_MESSAGE, m_listCtrl);
+	DDX_Text(pDX, IDC_EDIT_SEND, m_sendbuf);
+	DDX_Control(pDX, IDC_EDIT_IP, m_ip);
 }
 
 BEGIN_MESSAGE_MAP(CMFCClientnewDlg, CDialogEx)
@@ -72,6 +79,8 @@ BEGIN_MESSAGE_MAP(CMFCClientnewDlg, CDialogEx)
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
 	ON_BN_CLICKED(IDC_BUTTON_CONNECT, &CMFCClientnewDlg::OnBnClickedButtonConnect)
+	ON_BN_CLICKED(IDC_BUTTON_CLOSE, &CMFCClientnewDlg::OnBnClickedButtonClose)
+	ON_BN_CLICKED(IDC_BUTTON_Send, &CMFCClientnewDlg::OnBnClickedButtonSend)
 END_MESSAGE_MAP()
 
 
@@ -108,7 +117,6 @@ BOOL CMFCClientnewDlg::OnInitDialog()
 
 	// TODO: 在此添加额外的初始化代码
 	SetDlgItemText(IDC_EDIT_IP, _T("127.0.0.1"));//如何解决未定义，设置默认IP地址
-	SetDlgItemText(IDC_EDIT_PORT, _T("8080"));//设置默认客户端端口
 	UpdateData(FALSE);
 	m_close.EnableWindow(FALSE);
 	m_send.EnableWindow(FALSE);
@@ -165,57 +173,15 @@ HCURSOR CMFCClientnewDlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
-
-// 断开连接
-void CMy02_TCPClientDlg::OnBnClickedButton2()
-{
-	m_connBtn.EnableWindow(TRUE);
-	m_disConnBtn.EnableWindow(FALSE);
-	m_sendBtn.EnableWindow(FALSE);
-
-	m_connSocket.Close();
-}
-
-// 向服务器发送消息
-void CMy02_TCPClientDlg::OnBnClickedButton3()
+// 连接TCP服务器
+void CMFCClientnewDlg::OnBnClickedButtonConnect()
 {
 	UpdateData(TRUE);
-	USES_CONVERSION;
-	//函数T2A和W2A均支持ATL和MFC中的字符
-	char * send = T2A(m_sendBuf);
-	m_connSocket.Send(send, strlen(send));
-}
-
-// 清空消息列表
-void CMy02_TCPClientDlg::OnBnClickedButton4()
-{
-	m_listCtrl.DeleteAllItems();
-}
-
-void CMy02_TCPClientDlg::AddMsg(CString msg)
-{
-	m_listCtrl.InsertItem(0, msg);
-}
-
-void CMy02_TCPClientDlg::MyEnableBtn()
-{
-	m_connBtn.EnableWindow(TRUE);
-	m_disConnBtn.EnableWindow(FALSE);
-}
-
-
-void CMFCClientnewDlg::OnBnClickedButtonConnect()//连接TCP服务器
-{
-	// TODO: 在此添加控件通知处理程序代码
-	UpdateData(TRUE);
-	BYTE a, b, c, d;
-	m_ip.GetAddress(a, b, c, d);
-	CString ip;
-	ip.Format(_T("%d.%d.%d.%d"), a, b, c, d);
-	BOOL ret = m_connSocket.Create();
+	CString ip=_T("127.0.0.1");
+	BOOL ret = m_socket.Create();
 	if (ret)
 	{
-		ret = m_connSocket.Connect(ip, m_port);
+		ret = m_socket.Connect(ip, m_port);
 		if (ret)
 		{
 			m_connect.EnableWindow(FALSE);
@@ -224,8 +190,8 @@ void CMFCClientnewDlg::OnBnClickedButtonConnect()//连接TCP服务器
 		}
 		else
 		{
-			AfxMessageBox(_T("连接服务器失败"));
-			m_connSocket.Close();
+			MessageBox(_T("连接服务器失败"));
+			m_socket.Close();
 		}
 	}
 	else
@@ -233,4 +199,35 @@ void CMFCClientnewDlg::OnBnClickedButtonConnect()//连接TCP服务器
 		MessageBox(_T("创建套接字失败"));
 	}
 
+}
+
+// 断开连接
+void CMFCClientnewDlg::OnBnClickedButtonClose()
+{
+	m_connect.EnableWindow(TRUE);
+	m_close.EnableWindow(FALSE);
+	m_send.EnableWindow(FALSE);
+
+	m_socket.Close();
+}
+
+// 向服务器发送消息
+void CMFCClientnewDlg::OnBnClickedButtonSend()
+{
+	UpdateData(TRUE);
+	USES_CONVERSION;
+	//函数T2A和W2A均支持ATL和MFC中的字符
+	char * send = T2A(m_sendbuf);
+	m_socket.Send(send, strlen(send));
+}
+
+void CMFCClientnewDlg::AddMsg(CString msg)
+{
+	m_listCtrl.InsertItem(0, msg);
+}
+
+void CMFCClientnewDlg::MyEnableBtn()
+{
+	m_connect.EnableWindow(TRUE);
+	m_close.EnableWindow(FALSE);
 }

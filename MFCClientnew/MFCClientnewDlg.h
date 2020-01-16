@@ -5,6 +5,7 @@
 #pragma once
 #include "afxcmn.h"
 #include "afxwin.h"
+#include"afxsock.h"
 #include "ConnectSocket.h"
 
 // CMFCClientnewDlg 对话框

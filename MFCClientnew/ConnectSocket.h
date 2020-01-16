@@ -1,5 +1,5 @@
 #pragma once
-
+#include"afxsock.h"
 class CMFCClientnewDlg;
 // CConnSocket ÃüÁîÄ¿±ê
 

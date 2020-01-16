@@ -176,7 +176,6 @@ HCURSOR CMFCClientnewDlg::OnQueryDragIcon()
 // 连接TCP服务器
 void CMFCClientnewDlg::OnBnClickedButtonConnect()
 {
-	UpdateData(TRUE);
 	CString ip=_T("127.0.0.1");
 	BOOL ret = m_socket.Create();
 	if (ret)
